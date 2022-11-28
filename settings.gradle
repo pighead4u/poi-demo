@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'poi-demo'
-include('app')
+include('app', 'poi-examples')
