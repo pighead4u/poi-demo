@@ -3,14 +3,24 @@
  */
 package com.ashideng.report;
 
+import com.ashideng.report.template.TitlePage;
+import org.apache.poi.ss.formula.functions.T;
+
+import java.util.Date;
+
 public class App {
     public String getGreeting() {
         return "Hello World!";
     }
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
-        TestCreateTemplate testCreateTemplate = new TestCreateTemplate();
-        testCreateTemplate.testCreate();
+//        System.out.println(new App().getGreeting());
+//        TestCreateTemplate testCreateTemplate = new TestCreateTemplate();
+//        testCreateTemplate.testCreate();
+//        TestReadReport report = new TestReadReport();
+//        report.readReports("./reports/demo.docx");
+        TitlePage titlePage = new TitlePage();
+        String path = new Date().getTime() + ".docx";
+        titlePage.createPage(path);
     }
 }
