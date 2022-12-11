@@ -3,6 +3,7 @@
  */
 package com.ashideng.report;
 
+import com.ashideng.report.pdf.PDFReport;
 import com.ashideng.report.template.FormalTemplate;
 
 import java.util.*;
@@ -21,10 +22,14 @@ public class App {
 //        TitlePage titlePage = new TitlePage();
 //        String path = "./reports/" + new Date().getTime() + ".docx";
 //        titlePage.createTableByRow(path, 12, 3);
-        String path = "./templates/demo.docx";
-//        String path = "./templates/newdemo.docx";
-        Set<String> excludeTables = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
-        FormalTemplate deleteTest = new FormalTemplate();
-        deleteTest.buildNewTemplate(path, excludeTables);
+        String path = "./templates/realdemo.docx";
+////        String path = "./templates/newdemo.docx";
+//        Set<String> excludeTables = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
+//        FormalTemplate deleteTest = new FormalTemplate();
+//        deleteTest.buildNewTemplate(path, excludeTables);
+
+        PDFReport report = new PDFReport();
+        String pdfPath = "./reports/demo.pdf";
+        report.convertToPDF(path, pdfPath);
     }
 }
