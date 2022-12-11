@@ -19,46 +19,82 @@ public class FormalTemplate {
 
     // 定位试验table的正则
     private final String PATTERN = "(?<=\\{\\{\\^)[^\\}\\}]+";
+    private final int TABLE_START = 6;
 
     public void buildNewTemplate(String path, Set<String> excludeTable) {
-        try {
-            XWPFDocument document = new XWPFDocument(new FileInputStream(path));
-            List<XWPFTable> tables = document.getTables();
+        try (XWPFDocument document = new XWPFDocument(new FileInputStream(path))) {
+            deleteExperiments(document);
 
-            Set<XWPFTable> deleteTables = new HashSet<>();
-            Pattern pattern = Pattern.compile(PATTERN);
-
-            for (int i = 6; i < tables.size(); i++) {
-                XWPFTable table = tables.get(i);
-                String content = table.getText();
-                Matcher matcher = pattern.matcher(content);
-                if (matcher.find()) {
-                    String extractContent = matcher.group();
-                    if (!excludeTable.contains(extractContent)) {
-                        deleteTables.add(table);
-                    }
-                }
-            }
-
-            deleteTables.stream().forEach(item -> {
-                int index = document.getPosOfTable(item);
-                boolean success = document.removeBodyElement(index);
-                System.out.println("tables:" + index + "--delete:" +success);
-            });
-
-//            testXWPFParagraph(document, keepParagraphs);
-
-            deleteParagraphs(document, 6, document.getTables().size());
-
-            FileOutputStream out = new FileOutputStream("./reports/newdemo.docx");
-            document.write(out);
+//            deleteTables(excludeTable, document);
+//
+//            deleteParagraphs(document, TABLE_START, document.getTables().size());
+//
+//            FileOutputStream out = new FileOutputStream("./reports/newdemo.docx");
+//            document.write(out);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void testXWPFParagraph(XWPFDocument document, Set<Integer> keeps) {
+    private void deleteExperiments(XWPFDocument document) {
+        List<XWPFTable> tables = document.getTables();
+        XWPFTable table = tables.get(3);
+        List<XWPFTableRow> rows = table.getRows();
+
+        for (int i = 0; i < rows.size(); i++) {
+            XWPFTableRow row = rows.get(i);
+            System.out.println("rows:" + i);
+            boolean isBreak = true;
+            for (int j = 0; j < row.getTableCells().size(); j++) {
+                XWPFTableCell cell = row.getTableCells().get(j);
+                String cellContent = cell.getText();
+                if (cellContent.contains("Test item")) {
+                    isBreak = false;
+                    continue;
+                }
+
+                if (isBreak) {
+                    break;
+                }
+
+                cell.getParagraphs().forEach(item -> {
+                    System.out.println(item.getText());
+                });
+
+                System.out.println("j:" + j + "--" + cellContent);
+
+            }
+
+        }
+    }
+
+    private void deleteTables(Set<String> excludeTable, XWPFDocument document) {
+        List<XWPFTable> tables = document.getTables();
+
+        Set<XWPFTable> deleteTables = new HashSet<>();
+        Pattern pattern = Pattern.compile(PATTERN);
+
+        for (int i = TABLE_START; i < tables.size(); i++) {
+            XWPFTable table = tables.get(i);
+            String content = table.getText();
+            Matcher matcher = pattern.matcher(content);
+            if (matcher.find()) {
+                String extractContent = matcher.group();
+                if (!excludeTable.contains(extractContent)) {
+                    deleteTables.add(table);
+                }
+            }
+        }
+
+        deleteTables.stream().forEach(item -> {
+            int index = document.getPosOfTable(item);
+            boolean success = document.removeBodyElement(index);
+            System.out.println("tables:" + index + "--delete:" + success);
+        });
+    }
+
+    private void testXWPFParagraph(XWPFDocument document, Set<Integer> keeps) {
         List<XWPFParagraph> paragraphs = document.getParagraphs();
         final int start = 9;
         final int end = paragraphs.size();
