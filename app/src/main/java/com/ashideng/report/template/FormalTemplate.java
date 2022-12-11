@@ -1,5 +1,6 @@
 package com.ashideng.report.template;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.FileInputStream;
@@ -23,32 +24,46 @@ public class FormalTemplate {
 
     public void buildNewTemplate(String path, Set<String> excludeTable) {
         try (XWPFDocument document = new XWPFDocument(new FileInputStream(path))) {
-            deleteExperiments(document);
+            StopWatch watch = new StopWatch();
+            watch.start();
 
-//            deleteTables(excludeTable, document);
-//
-//            deleteParagraphs(document, TABLE_START, document.getTables().size());
-//
-//            FileOutputStream out = new FileOutputStream("./reports/newdemo.docx");
-//            document.write(out);
+            deleteExperiments(document, excludeTable);
+            watch.split();
+            System.out.println("deleteExperiments-time:" + watch.getTime());
+
+            deleteTables(excludeTable, document);
+            watch.split();
+            System.out.println("deleteTables-time:" + watch.getTime());
+
+            deleteParagraphs(document, TABLE_START, document.getTables().size());
+            watch.split();
+            System.out.println("deleteParagraphs-time:" + watch.getTime());
+
+            FileOutputStream out = new FileOutputStream("./reports/newdemo.docx");
+            document.write(out);
+
+            watch.stop();
+            System.out.println("total_time-time:" + watch.getTime());
+
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void deleteExperiments(XWPFDocument document) {
+    private void deleteExperiments(XWPFDocument document, Set<String> excludeTable) {
         List<XWPFTable> tables = document.getTables();
         XWPFTable table = tables.get(3);
         List<XWPFTableRow> rows = table.getRows();
 
         for (int i = 0; i < rows.size(); i++) {
             XWPFTableRow row = rows.get(i);
-            System.out.println("rows:" + i);
+//            System.out.println("rows:" + i);
             boolean isBreak = true;
             for (int j = 0; j < row.getTableCells().size(); j++) {
                 XWPFTableCell cell = row.getTableCells().get(j);
                 String cellContent = cell.getText();
+                // 定位到检测项目这一行
                 if (cellContent.contains("Test item")) {
                     isBreak = false;
                     continue;
@@ -58,11 +73,49 @@ public class FormalTemplate {
                     break;
                 }
 
-                cell.getParagraphs().forEach(item -> {
-                    System.out.println(item.getText());
-                });
+                // 总体思路：一行一行遍历，如果在保留的试验项目内的，这一行保留，并删除后续的定位符号;如果不在，则删除这一行
+                List<Integer> deleteParagraphs = new ArrayList<>();
+                for (int k = 0; k < cell.getParagraphs().size(); k++) {
+                    XWPFParagraph paragraph = cell.getParagraphArray(k);
+                    String content = paragraph.getText();
+                    boolean isExisted = false;
+                    for (String item : excludeTable) {
+                        if (content.contains(item)) {
+                            isExisted = true;
 
-                System.out.println("j:" + j + "--" + cellContent);
+                            List<XWPFRun> runs = paragraph.getRuns();
+                            boolean isNeedDelete = true;
+                            for (int m = runs.size()-1; m > 0;m--) {
+                                XWPFRun run = paragraph.getRuns().get(m);
+                                String deleteContent = run.text();
+                                if (!isNeedDelete && deleteContent.contains("}}")) {
+                                    break;
+                                }
+
+                                // }}{{-是在一个run里的
+                                if (deleteContent.contains("{{")) {
+                                    isNeedDelete = false;
+                                    run.setText("}}", 0);
+                                }
+
+                                if (isNeedDelete) {
+                                    paragraph.removeRun(m);
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+
+                    if (!isExisted) {
+                        deleteParagraphs.add(k);
+                    }
+
+                }
+
+                for (int k = deleteParagraphs.size()-1; k > 0; k--) {
+                    cell.removeParagraph(deleteParagraphs.get(k));
+                }
 
             }
 
@@ -160,7 +213,6 @@ public class FormalTemplate {
             int index = document.getPosOfParagraph(item);
             boolean success = document.removeBodyElement(index);
             System.out.println("paragraph:" + index + "--" + success);
-
         });
 
     }
