@@ -17,15 +17,13 @@ import java.util.regex.Pattern;
  **/
 public class DeleteTest {
 
+    // 定位试验table的正则
     private final String PATTERN = "(?<=\\{\\{\\^)[^\\}\\}]+";
 
     public void buildNewTemplate(String path, Set<String> excludeTable) {
         try {
             XWPFDocument document = new XWPFDocument(new FileInputStream(path));
             List<XWPFTable> tables = document.getTables();
-            System.out.println(document.getParagraphs().size());
-            System.out.println(document.getTables().size());
-            System.out.println(document.getBodyElements().size());
 
             Set<XWPFTable> deleteTables = new HashSet<>();
             Pattern pattern = Pattern.compile(PATTERN);
@@ -49,14 +47,13 @@ public class DeleteTest {
 
             deleteTables.stream().forEach(item -> {
                 int index = document.getPosOfTable(item);
-                System.out.println("tables:" + index);
                 boolean success = document.removeBodyElement(index);
-                System.out.println(success);
+                System.out.println("tables:" + index + "--delete:" +success);
             });
 
 //            testXWPFParagraph(document, keepParagraphs);
 
-            testBodyElement(document, 6, document.getTables().size());
+            deleteParagraphs(document, 6, document.getTables().size());
 
             FileOutputStream out = new FileOutputStream("./reports/newdemo.docx");
             document.write(out);
@@ -68,7 +65,6 @@ public class DeleteTest {
 
     public void testXWPFParagraph(XWPFDocument document, Set<Integer> keeps) {
         List<XWPFParagraph> paragraphs = document.getParagraphs();
-        System.out.println(paragraphs.size());
         final int start = 9;
         final int end = paragraphs.size();
         int count = 0;
@@ -86,30 +82,29 @@ public class DeleteTest {
 
         deleteParagraphs.forEach(item -> {
             int index = document.getPosOfParagraph(item);
-            System.out.println("paragraph:" + index);
+            System.out.println();
 
             if (!keeps.contains(index)) {
                 boolean success = document.removeBodyElement(index);
-                System.out.println(success);
+                System.out.println("paragraph:" + index + "--delete:" + success);
 
             }
         });
 
     }
 
-    public void testBodyElement(XWPFDocument document, int start, int end) {
+    public void deleteParagraphs(XWPFDocument document, int start, int end) {
         Iterator<IBodyElement> iterators = document.getBodyElementsIterator();
         int tableCount = 0;
         boolean canRecord = false;
         Set<XWPFParagraph> deleteParagraphs = new HashSet<>();
+
         while (iterators.hasNext()) {
             IBodyElement element = iterators.next();
-            System.out.println(element.getElementType());
             switch (element.getElementType()) {
                 case TABLE:
                     tableCount++;
                     if (canRecord && tableCount > start) {
-                        System.out.println("tablecount:" + tableCount + "--end:" + end);
                         if (tableCount != end) {
                             // 最后一个试验table不需要保留paragraph
                             iterators.next();
@@ -121,23 +116,19 @@ public class DeleteTest {
                         // 每个试验table后续跟了一个paragraph,必须保留
                         iterators.next();
                     }
-
                     break;
                 case PARAGRAPH:
                     if (canRecord) {
-                        System.out.println("comming---");
                         deleteParagraphs.add((XWPFParagraph) element);
                     }
                     break;
             }
-
         }
 
         deleteParagraphs.forEach(item -> {
             int index = document.getPosOfParagraph(item);
-            System.out.println("paragraph:" + index);
             boolean success = document.removeBodyElement(index);
-            System.out.println(success);
+            System.out.println("paragraph:" + index + "--" + success);
 
         });
 
