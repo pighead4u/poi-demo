@@ -3,7 +3,7 @@
  */
 package com.ashideng.report;
 
-import com.ashideng.report.template.DeleteTest;
+import com.ashideng.report.template.FormalTemplate;
 
 import java.util.*;
 
@@ -24,7 +24,7 @@ public class App {
         String path = "./templates/demo.docx";
 //        String path = "./templates/newdemo.docx";
         Set<String> excludeTables = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
-        DeleteTest deleteTest = new DeleteTest();
+        FormalTemplate deleteTest = new FormalTemplate();
         deleteTest.buildNewTemplate(path, excludeTables);
     }
 }

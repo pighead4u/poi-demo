@@ -12,10 +12,10 @@ import java.util.regex.Pattern;
 /**
  * @author zhuhuanhuan@shunjiantech.cn
  * @version 1.0.0
- * @description
+ * @description: 正式的模板，方便后续的代码填充占位符
  * @create 2022/12/9 下午2:34
  **/
-public class DeleteTest {
+public class FormalTemplate {
 
     // 定位试验table的正则
     private final String PATTERN = "(?<=\\{\\{\\^)[^\\}\\}]+";
@@ -27,7 +27,6 @@ public class DeleteTest {
 
             Set<XWPFTable> deleteTables = new HashSet<>();
             Pattern pattern = Pattern.compile(PATTERN);
-            Set<Integer> keepParagraphs = new HashSet<>();
 
             for (int i = 6; i < tables.size(); i++) {
                 XWPFTable table = tables.get(i);
@@ -37,10 +36,6 @@ public class DeleteTest {
                     String extractContent = matcher.group();
                     if (!excludeTable.contains(extractContent)) {
                         deleteTables.add(table);
-                    } else {
-                        int index = document.getPosOfTable(table);
-                        keepParagraphs.add(index);
-                        System.out.println("keeps:" + index);
                     }
                 }
             }
