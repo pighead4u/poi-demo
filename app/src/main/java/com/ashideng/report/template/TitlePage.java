@@ -1,6 +1,9 @@
 package com.ashideng.report.template;
 
 import org.apache.poi.xwpf.usermodel.*;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -42,7 +45,6 @@ public class TitlePage {
                 // 水平居中
                 cells.get(0).getParagraphs().get(0).setAlignment(ParagraphAlignment.CENTER);
 
-
                 index.getAndIncrement();
             });
 
@@ -58,9 +60,18 @@ public class TitlePage {
         return true;
     }
 
-    public boolean createTableByRow(String path) {
+    public boolean createTableByRow(String path, int rows, int columns) {
         try (XWPFDocument doc = new XWPFDocument(); FileOutputStream out = new FileOutputStream(path)) {
+            XWPFTable table = doc.createTable(rows, columns);
+            table.setWidth("100%");
+            table.setWidthType(TableWidthType.PCT);//设置表格相对宽度
+            table.setTableAlignment(TableRowAlign.CENTER);
 
+            //合并单元格
+            XWPFTableRow row1 = table.getRow(0);
+            mergeCells(row1, 0, 2);
+
+            doc.write(out);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
@@ -70,65 +81,76 @@ public class TitlePage {
         return true;
     }
 
-//    public void test() {
-//        XWPFTable Table = document.getTableArray(16);
-//
-//        XWPFTableRow getRow1 = Table.getRow(1);
-//
-//
-//        XWPFTableRow getRow0 = Table.getRow(0);
-//
-//        //baris 1
-//        for(int i = 0; i < listLHA.size(); i++) {
-//            getRow0.getCell(0).setText(listLHA.get(0).getKeyProsses()+ " KEY PROSES");
-//            break;
-//        }
-//
-//        //baris 2
-//
-//        for(int i = 0; i < listLHA.size(); i++) {
-//            getRow1.getCell(0).setText(listLHA.get(0).getRiskRating());
-//            getRow1.getCell(1).setText(listLHA.get(0).getAuditObservationTitle()+ " AO TITLE");
-//            break;
-//        }
-//
-//        XWPFTableRow examInfoRow = Table.createRow();
-//        XWPFTableCell cellRowInfo = examInfoRow.addNewTableCell();
-//
-//        XWPFParagraph examInfoRowP = cellRowInfo.getParagraphs().get(0);
-//        XWPFRun examRun = examInfoRowP.createRun(); //problem 1
-//
-//        examInfoRowP.setAlignment(ParagraphAlignment.LEFT);
-//        //list Action plan
-//        examRun.setText("Action Plan:");
-//        examRun.addBreak();
-//        for (AuditEngagementLHA lha : listLHA) {
-//            int i = listLHA.indexOf(lha);
-//            examRun.setText(i+1 +"."+lha.getDescAP().replaceAll("\\<[^>]*>",""));
-//            examRun.addBreak();
-//        }
-//        for(int i = 0; i < listLHA.size(); i++) {
-//            examRun.setText("Target Date: ");
-//            examRun.setText(listLHA.get(0).getTargetDateAP());
-//            examRun.addBreak();
-//            break;
-//        }
-//
-//        examRun.addBreak();
-//        for(int i = 0; i < listLHA.size(); i++) {
-//            examInfoRow.getCell(0).setText(listLHA.get(0).getDescAO()+" Desc AO");
-//            examRun.addBreak();
-//            break;
-//        }
-//        //List penanggung jawab
-//        examRun.setText("Penanggung Jawab:");
-//        examRun.addBreak();
-//        for (AuditEngagementLHA lha : listLHA) {
-//            int i = listLHA.indexOf(lha);
-//
-//            examRun.setText(i+1 +"."+lha.getPicAP()+" - ");
-//            examRun.setText(lha.getJabatanPicAP());
-//            examRun.addBreak();
-//        }
-//    }
+    static class TitlePagePO {
+
+        private final String title_cn;
+        private int title_cn_size;
+        private int title_cn_height;
+        private final String title_en;
+        private int title_en_size;
+        private int title_en_height;
+        private final String report_num;
+        private int report_num_size;
+
+        public String getTitle_cn() {
+            return title_cn;
+        }
+
+        public int getTitle_cn_size() {
+            return title_cn_size;
+        }
+
+        public String getTitle_en() {
+            return title_en;
+        }
+
+        public int getTitle_en_size() {
+            return title_en_size;
+        }
+
+        public String getReport_num() {
+            return report_num;
+        }
+
+        public int getReport_num_size() {
+            return report_num_size;
+        }
+
+        public TitlePagePO(String ititle_cn,
+                           int ititle_cn_size,
+                           String ititle_en,
+                           int ititle_en_size,
+                           String ireport_num,
+                           int ireport_num_size) {
+            title_cn = ititle_cn;
+            title_cn_size = ititle_cn_size;
+            title_en = ititle_en;
+            title_en_size = ititle_en_size;
+            report_num = ireport_num;
+            report_num_size = ireport_num_size;
+        }
+    }
+
+    private boolean mergeCells(XWPFTableRow row, int start_index, int end_index) {
+        for (int i = start_index; i <= end_index; i++) {
+            if (i == start_index) {
+                XWPFTableCell cell1 = row.getCell(start_index);
+                CTTcPr cellCtPr = getCellCTTcPr(cell1);
+                cellCtPr.addNewHMerge().setVal(STMerge.RESTART);
+            } else {
+                XWPFTableCell cell2 = row.getCell(i);
+                CTTcPr cellCtPr2 = getCellCTTcPr(cell2);
+                cellCtPr2.addNewHMerge().setVal(STMerge.CONTINUE);
+            }
+        }
+
+        return true;
+    }
+
+    private CTTcPr getCellCTTcPr(XWPFTableCell cell) {
+        CTTc cttc = cell.getCTTc();
+        CTTcPr tcPr = cttc.isSetTcPr() ? cttc.getTcPr() : cttc.addNewTcPr();
+        return tcPr;
+    }
+
 }

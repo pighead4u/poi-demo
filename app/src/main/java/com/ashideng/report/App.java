@@ -3,10 +3,9 @@
  */
 package com.ashideng.report;
 
-import com.ashideng.report.template.TitlePage;
-import org.apache.poi.ss.formula.functions.T;
+import com.ashideng.report.template.DeleteTest;
 
-import java.util.Date;
+import java.util.*;
 
 public class App {
     public String getGreeting() {
@@ -19,8 +18,13 @@ public class App {
 //        testCreateTemplate.testCreate();
 //        TestReadReport report = new TestReadReport();
 //        report.readReports("./reports/demo.docx");
-        TitlePage titlePage = new TitlePage();
-        String path = new Date().getTime() + ".docx";
-        titlePage.createPage(path);
+//        TitlePage titlePage = new TitlePage();
+//        String path = "./reports/" + new Date().getTime() + ".docx";
+//        titlePage.createTableByRow(path, 12, 3);
+        String path = "./templates/demo.docx";
+//        String path = "./templates/newdemo.docx";
+        Set<String> excludeTables = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
+        DeleteTest deleteTest = new DeleteTest();
+        deleteTest.buildNewTemplate(path, excludeTables);
     }
 }

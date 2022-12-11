@@ -102,7 +102,7 @@ public class WordInsertContentInTable {
 
         insertContentInTable(table, listOfPOJOs);
 
-        FileOutputStream out = new FileOutputStream("./WordResult.docx");
+        FileOutputStream out = new FileOutputStream("./reports/WordResult.docx");
         document.write(out);
         out.close();
         document.close();
