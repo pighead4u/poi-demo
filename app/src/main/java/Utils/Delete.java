@@ -4,7 +4,6 @@ package Utils;
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +23,7 @@ public class Delete {
         List<XWPFTableRow> rows = table.getRows();
 
         // create patterns for regex matching
-        String p1 = "wssy|lxzkcl";
+        String p1 = "t_lxzkcl|t_gbwssy|t_wssy";
 
         // find the rows that do not contain the pattern
         Pattern pattern = Pattern.compile(p1);
