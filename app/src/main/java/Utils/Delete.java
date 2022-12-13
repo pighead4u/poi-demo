@@ -39,7 +39,7 @@ public class Delete {
             List<XWPFTableRow> rows = table.getRows();
 
             // create the pattern for regex matching
-            String p = "(\\{\\{.*)\\.";
+            String p = "(\\{\\{)(.*)\\.";
             Pattern pattern = Pattern.compile(p);
 
             // store all possible outcomes
@@ -50,7 +50,7 @@ public class Delete {
                 for (XWPFTableCell cell : rows.get(i).getTableCells()) {
                     Matcher matcher = pattern.matcher(cell.getText());
 
-                    if (matcher.find() && targetStrings.contains(matcher.group(1).substring(2))) {
+                    if (matcher.find() && targetStrings.contains(matcher.group(2))) {
                         rowIndices.remove((Integer) i);
                         break;
                     }
