@@ -4,7 +4,6 @@
 gradle/
 gradlew*
 reports
-templates
 
 # Ignore Gradle build output directory
 build
