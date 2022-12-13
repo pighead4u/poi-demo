@@ -2,6 +2,7 @@ package Utils;
 
 
 import org.apache.poi.xwpf.usermodel.*;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
@@ -18,13 +19,12 @@ public class Delete {
     /**
      * extract matched lines by regex
      *
-     * @param tableName the table to operate
+     * @param tableName      the table to operate
      * @param targetFilePath the file path at which the docx file is
-     * @param targetStrings the strings to extract to keep the lines
+     * @param targetStrings  the strings to extract to keep the lines
      */
-    public static void extract(String tableName, String targetFilePath, Set<String> targetStrings)  {
-        try {
-            XWPFDocument srcDoc = new XWPFDocument(new FileInputStream(targetFilePath));
+    public static void extract(String tableName, String targetFilePath, Set<String> targetStrings) {
+        try (XWPFDocument srcDoc = new XWPFDocument(new FileInputStream(targetFilePath))) {
             List<XWPFTable> tables = srcDoc.getTables();
 
             // get the table number
