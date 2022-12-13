@@ -2,8 +2,8 @@ package Utils;
 
 
 import org.apache.poi.xwpf.usermodel.*;
-
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,47 +11,65 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Delete {
+    static final String TABLE_NAME = "2检测结果汇总";
     static final String FILE_PATH = "./templates/demo.docx";
-    static final Set<String> EXCLUDE_STRINGS = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
+    static final Set<String> EXCLUDE_STRINGS = new HashSet<>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
 
-    public static void extract(String targetFilePath, Set<String> targetStrings) throws Exception {
-        XWPFDocument srcDoc = new XWPFDocument(new FileInputStream(FILE_PATH));
+    /**
+     * extract matched lines by regex
+     *
+     * @param tableName the table to operate
+     * @param targetFilePath the file path at which the docx file is
+     * @param targetStrings the strings to extract to keep the lines
+     */
+    public static void extract(String tableName, String targetFilePath, Set<String> targetStrings)  {
+        try {
+            XWPFDocument srcDoc = new XWPFDocument(new FileInputStream(targetFilePath));
+            List<XWPFTable> tables = srcDoc.getTables();
 
-        List<XWPFParagraph> paragraphs = srcDoc.getParagraphs();
-        List<XWPFTable> tables = srcDoc.getTables();
-        XWPFTable table = tables.get(5); // the table 2检测结果汇总
-        List<XWPFTableRow> rows = table.getRows();
-
-        // create patterns for regex matching
-        String p1 = "t_lxzkcl|t_gbwssy|t_wssy";
-
-        // find the rows that do not contain the pattern
-        Pattern pattern = Pattern.compile(p1);
-        List<Integer> rowIndices = new ArrayList<>();
-
-        // create a list to store all possible outcomes
-        List<Integer> indices = IntStream.range(2, rows.size()).boxed().collect(Collectors.toList());
-
-        // save the wanted lines from the list
-        for (int i = 2; i < rows.size(); i++) { // since the contents starts at index 2
-            for (XWPFTableCell cell : rows.get(i).getTableCells()) {
-                Matcher matcher = pattern.matcher(cell.getText());
-                if (matcher.find()) {
-                    indices.remove((Integer) i);
-                    break;
+            // get the table number
+            int tableNum = 0;
+            for (int i = 0; i < tables.size(); i++) {
+                if (tables.get(i).getRow(0).getCell(0).getText().equals(tableName)) {
+                    tableNum = i;
                 }
             }
+
+            XWPFTable table = tables.get(tableNum); // the table 2检测结果汇总
+            List<XWPFTableRow> rows = table.getRows();
+
+            // create the pattern for regex matching
+            String p = "(t_.*)\\.";
+            Pattern pattern = Pattern.compile(p);
+
+            // store all possible outcomes
+            List<Integer> rowIndices = IntStream.range(2, rows.size()).boxed().collect(Collectors.toList());
+
+            // save wanted lines
+            for (int i = 2; i < rows.size(); i++) { // since the content starts at the third line
+                for (XWPFTableCell cell : rows.get(i).getTableCells()) {
+                    Matcher matcher = pattern.matcher(cell.getText());
+
+                    if (matcher.find() && targetStrings.contains(matcher.group(1))) {
+                        rowIndices.remove((Integer) i);
+                        break;
+                    }
+                }
+            }
+            System.out.println(rowIndices);
+            Collections.reverse(rowIndices);
+
+            // keep only the rows that match the pattern
+            for (int i : rowIndices) {
+                table.removeRow(i);
+            }
+            System.out.println("rows remain: " + table.getRows().size());
+
+        } catch (IOException e) {
+            System.out.println("Bad file path");
         }
 
-        Collections.reverse(indices);
-
-        // keep only the rows that match the pattern
-        for (int i : indices) {
-            table.removeRow(i);
-        }
-        System.out.println("rows remain: " + table.getRows().size());
-
-
+        // print results
 //        for (XWPFTableRow row : rows) {
 //            for (XWPFTableCell cell : row.getTableCells()) {
 //                System.out.println(cell.getText());
@@ -60,8 +78,8 @@ public class Delete {
 //        }
     }
 
-    public static void main(String[] args) throws Exception {
-        extract(FILE_PATH, EXCLUDE_STRINGS);
+    public static void main(String[] args) {
+        extract(TABLE_NAME, FILE_PATH, EXCLUDE_STRINGS);
     }
 }
 

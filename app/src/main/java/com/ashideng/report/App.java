@@ -5,9 +5,7 @@ package com.ashideng.report;
 
 import com.ashideng.report.pdf.PDFReport;
 import com.ashideng.report.template.FormalTemplate;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
-import java.io.FileInputStream;
 import java.util.*;
 
 public class App {
@@ -15,9 +13,7 @@ public class App {
         return "Hello World!";
     }
 
-
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 //        System.out.println(new App().getGreeting());
 //        TestCreateTemplate testCreateTemplate = new TestCreateTemplate();
 //        testCreateTemplate.testCreate();
@@ -26,17 +22,14 @@ public class App {
 //        TitlePage titlePage = new TitlePage();
 //        String path = "./reports/" + new Date().getTime() + ".docx";
 //        titlePage.createTableByRow(path, 12, 3);
-        String path = "./templates/demo.docx";
-        XWPFDocument newDoc = new XWPFDocument();
-        XWPFDocument sourceDoc = new XWPFDocument(new FileInputStream(path));
-
+        String path = "./templates/realdemo.docx";
 ////        String path = "./templates/newdemo.docx";
-        Set<String> excludeTables = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
+//        Set<String> excludeTables = new HashSet<String>(Arrays.asList("t_lxzkcl", "t_gbwssy", "t_wssy"));
 //        FormalTemplate deleteTest = new FormalTemplate();
 //        deleteTest.buildNewTemplate(path, excludeTables);
 
-//        PDFReport report = new PDFReport();
-//        String pdfPath = "./reports/demo.pdf";
-//        report.convertToPDF(path, pdfPath);
+        PDFReport report = new PDFReport();
+        String pdfPath = "./reports/demo.pdf";
+        report.convertToPDF(path, pdfPath);
     }
 }
