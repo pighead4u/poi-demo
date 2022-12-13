@@ -39,7 +39,7 @@ public class Delete {
             List<XWPFTableRow> rows = table.getRows();
 
             // create the pattern for regex matching
-            String p = "([a-z]+_.*)\\.";
+            String p = "([a-z]+_.+)\\.";
             Pattern pattern = Pattern.compile(p);
 
             // store all possible outcomes
