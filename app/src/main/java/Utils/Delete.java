@@ -39,7 +39,7 @@ public class Delete {
             List<XWPFTableRow> rows = table.getRows();
 
             // create the pattern for regex matching
-            String p = "(\\{\\{)(.*)\\.";
+            String p = "([a-z]+_.*)\\.";
             Pattern pattern = Pattern.compile(p);
 
             // store all possible outcomes
@@ -49,13 +49,13 @@ public class Delete {
             for (int i = 2; i < rows.size(); i++) { // since the content starts at the third line
                 for (XWPFTableCell cell : rows.get(i).getTableCells()) {
                     Matcher matcher = pattern.matcher(cell.getText());
-
-                    if (matcher.find() && targetStrings.contains(matcher.group(2))) {
+                    if (matcher.find() && targetStrings.contains(matcher.group(1))) {
                         rowIndices.remove((Integer) i);
                         break;
                     }
                 }
             }
+
             System.out.println(rowIndices);
             Collections.reverse(rowIndices);
 
