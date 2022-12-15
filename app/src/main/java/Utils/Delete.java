@@ -1,6 +1,5 @@
 package Utils;
 
-
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.FileInputStream;
@@ -21,7 +20,7 @@ public class Delete {
      *
      * @param tableName      the table to operate
      * @param targetFilePath the file path at which the docx file is
-     * @param targetStrings  the strings to extract to keep the lines
+     * @param targetStrings  the strings that can be extracted to keep the lines
      */
     public static void extract(String tableName, String targetFilePath, Set<String> targetStrings) {
         try (XWPFDocument srcDoc = new XWPFDocument(new FileInputStream(targetFilePath))) {
@@ -32,6 +31,7 @@ public class Delete {
             for (int i = 0; i < tables.size(); i++) {
                 if (tables.get(i).getRow(0).getCell(0).getText().equals(tableName)) {
                     tableNum = i;
+                    break;
                 }
             }
 
