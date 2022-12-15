@@ -68,18 +68,6 @@ public class Delete {
         } catch (IOException e) {
             System.out.println("Bad file path");
         }
-
-        // print results
-//        for (XWPFTableRow row : rows) {
-//            for (XWPFTableCell cell : row.getTableCells()) {
-//                System.out.println(cell.getText());
-//            }
-//            System.out.println("\n");
-//        }
-    }
-
-    public static void main(String[] args) {
-        extract(TABLE_NAME, FILE_PATH, EXCLUDE_STRINGS);
     }
 }
 

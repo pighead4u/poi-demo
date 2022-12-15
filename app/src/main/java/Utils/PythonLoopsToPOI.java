@@ -6,37 +6,46 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.SQLOutput;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class PythonLoopsToPOI {
+    private static final double FONT_SIZE = 10.5;
+    private static final String FONT_FAMILY = "Times New Roman";
 
-
-    /**
-     * Find the indices of tables that contain Python for loops
-     * @return a list of indices of all tables that contain Python for loops
-     */
-    private static ArrayList<Integer> findTables() {
-
-        return null;
+    public static int findFirstValidCell(XWPFTableRow row) {
+        int res = 0;
+        for (int i = 0; i < row.getTableCells().size() - 1; i++) {
+            if (row.getTableCells().get(i) != null) {
+                res = i;
+                break;
+            }
+        }
+        return res;
     }
 
-    /**
-     * Find the indices of rows in a table that contain Python for loops
-     * @return a list of indices of all rows that contain Python for loops
-     */
-    private static ArrayList<Integer> findRows() {
-
-        return null;
+    public static int findFirstValidParagraph(XWPFTableCell cell) {
+        int res = 0;
+        for (int i = 0; i < cell.getParagraphs().size() - 1; i++) {
+            if (cell.getParagraphs().get(i) != null) {
+                res = i;
+                break;
+            }
+        }
+        return res;
+    }
+    public static int findFirstValidRun(XWPFParagraph para) {
+        int res = 0;
+        for (int i = 0; i < para.getRuns().size() - 1; i++) {
+            if (para.getRuns().get(i) != null) {
+                res = i;
+                break;
+            }
+        }
+        return res;
     }
 
-//    public static ArrayList<String> getCellStringsInNextLine(XWPFDocument doc, int tableNum, int rowNum) {
-//        List<XWPFTable>
-//    }
 
     public static void handles(String filePath) {
         try (XWPFDocument tempDoc = new XWPFDocument(new FileInputStream(filePath))) {
@@ -44,30 +53,70 @@ public class PythonLoopsToPOI {
 
             List<XWPFTable> tables = tempDoc.getTables();
             // {%tr for item in dts_kgg_jydzsy %}
-            String loopRegex = "%.*for.?(.*)in\\s((.*)\\.|.*).*%"; // {%tr for instrument in hwg_gtczjhdcl.instrument %}
+            String loopRegex = "%.*for.?(.*)in\\s((.*)\\.|.*).*\\s%"; // {%tr for instrument in hwg_gtczjhdcl.instrument %}
+            String nationalStdRegex = "%.*for\\s(.*)\\sin\\s(.*)\\s%}.*endfor.*";
             String endloopRegex = "%.*(endfor).*%"; // {%tr endfor %}
-            String multiFieldsInOneCellRegex = "(@?)(?:.*\\.)(.*)}}";
+            String multiFieldsInOneCellRegex = "\\{\\{(@)?(.*)\\.(.*)}}";
             Pattern loopPattern = Pattern.compile(loopRegex);
+            Pattern nationalStdPattern = Pattern.compile(nationalStdRegex);
             Pattern endloopPattern = Pattern.compile(endloopRegex);
             Pattern multiFieldsInOneCellPattern = Pattern.compile(multiFieldsInOneCellRegex);
 
-            int tabacc = 0;
+            int tabAcc = 0;
             for (XWPFTable table : tables) {
-                System.out.println(tabacc);
-                tabacc += 1;
+                System.out.println("table number       " + tabAcc);
+                System.out.println();
+                tabAcc += 1;
                 List<Integer> rowsToDelete = new ArrayList<>();
                 for (int i = 0; i < table.getRows().size(); i++) {
                     XWPFTableRow row = table.getRow(i);
                     for (int j = 0; j < row.getTableCells().size(); j++) {
                         String cellText = row.getCell(j).getText();
                         Matcher loopMatcher = loopPattern.matcher(cellText); // match the Python-style for loop
+                        Matcher nationalStdMatcher = nationalStdPattern.matcher(cellText);
                         Matcher endloopMatcher = endloopPattern.matcher(cellText);
 
-                        if (loopMatcher.find()) { // deals with the case if the cell contains the Python-style for loop
-                            System.out.println("row info group 0: " + loopMatcher.group(0));
-                            System.out.println("row info group 1: " + loopMatcher.group(1));
-                            System.out.println("row info group 2: " + loopMatcher.group(2));
-                            System.out.println("row info group 3: " + loopMatcher.group(3));
+                        /* If it's the case 检测依据 e.g., section 1.2 */
+                        if (nationalStdMatcher.find()) {
+                            XWPFTableCell cellToPlace = table.getRow(i - 1).getCell(0);
+//                            int ctpFirstValidPara = findFirstValidParagraph(cellToPlace);
+//                            int ctpFirstValidRun = findFirstValidRun(cellToPlace.getParagraphs().get(ctpFirstValidPara));
+
+//                            double cellToPlaceFontSize = cellToPlace.getParagraphs().get(ctpFirstValidPara).getRuns().
+//                                    get(ctpFirstValidRun).getFontSizeAsDouble();
+//                            String cellToPlaceFontFamily = cellToPlace.getParagraphs().get(ctpFirstValidPara).getRuns().
+//                                    get(ctpFirstValidRun).getFontFamily();
+                            XWPFRun cellToPlaceNewRun = cellToPlace.getParagraphs().get(cellToPlace.getParagraphs().size() - 1).createRun();
+                            cellToPlaceNewRun.setText("{" + nationalStdMatcher.group(2) + "}");
+                            cellToPlaceNewRun.setFontSize(FONT_SIZE);
+                            cellToPlaceNewRun.setFontFamily(FONT_FAMILY);
+
+                            XWPFTableCell currCell = table.getRow(i).getCell(0);
+//                            int currCellFirstValidPara = findFirstValidParagraph(cellToPlace);
+//                            int currCellFirstValidRun = findFirstValidRun(cellToPlace.getParagraphs().
+//                                    get(currCellFirstValidPara));
+//                            double currCellFontSize = currCell.getParagraphs().get(currCellFirstValidPara).getRuns().
+//                                    get(currCellFirstValidRun).getFontSizeAsDouble();
+//                            String currCellFontFamily = currCell.getParagraphs().get(currCellFirstValidPara).getRuns().
+//                                    get(currCellFirstValidRun).getFontFamily();
+
+                            for (int r = currCell.getParagraphs().size() - 1; r >= 0; r--) {
+                                currCell.removeParagraph(r);
+                            }
+                            XWPFRun currCellNewRun = currCell.addParagraph().createRun();
+                            currCellNewRun.setText("[" + nationalStdMatcher.group(1) + "]");
+                            currCellNewRun.setFontSize(FONT_SIZE);
+                            currCellNewRun.setFontFamily(FONT_FAMILY);
+
+                        }
+                        else if (loopMatcher.find()) { // deals with the case if the cell contains the Python-style for loop
+//                            System.out.println("row info group 0: " + loopMatcher.group(0));
+//                            System.out.println("row info group 1: " + loopMatcher.group(1));
+//                            System.out.println("row info group 2: " + loopMatcher.group(2));
+//                            System.out.println("row info group 3: " + loopMatcher.group(3));
+//                            row.getTableCells().forEach(cell -> {
+//                                System.out.println("cell contnt: ---------->>" + cell.getText());
+//                            });
 
                             // REASONING: There are two sorts of content to place in the row above the for loop:
                             // one with a dot like "hwg_gtczjhdcl.instrument", and the other without a dot like
@@ -76,15 +125,55 @@ public class PythonLoopsToPOI {
                             String loopContentToPlace = !loopMatcher.group(2).contains(".") ? loopMatcher.group(2) :
                                     loopMatcher.group(3);
 
-                            XWPFTableRow prevRow = table.getRow(i - 1);
-                            XWPFTableCell cellToPlace = prevRow.getCell(0);
 
-                            double fontSize = cellToPlace.getParagraphs().get(0).getRuns().get(0).getFontSizeAsDouble();
-                            String fontFamily = cellToPlace.getParagraphs().get(0).getRuns().get(0).getFontFamily();
-                            XWPFRun newRun = cellToPlace.addParagraph().createRun();
-                            newRun.setText(loopContentToPlace);
-                            newRun.setFontFamily(fontFamily);
-                            newRun.setFontSize(fontSize);
+                            System.out.println("table text ----------" + table.getText());
+
+                            System.out.println(table.getRows().size());
+
+                            /* check if there exists previous row */
+                            XWPFTableRow prevRow;
+
+                            // TODO: FIX ADDING A NEW ROW ISSUE FOR demo.docx AT PAGE 41
+                            if (i - 1 < 0) {
+                                table.insertNewTableRow(0);
+                                prevRow = table.getRow(0);
+                                prevRow.createCell().addParagraph().createRun();
+                            }
+                            else {
+                                prevRow = table.getRow(i - 1);
+                            }
+
+
+                            System.out.println(table.getRows().size());
+
+
+                            XWPFTableCell cellToPlace = prevRow.getCell(0);
+                            System.out.println("cell context ++++++++++" + cellToPlace.getText());
+
+                            System.out.println(prevRow.getTableCells().get(findFirstValidCell(prevRow)));
+
+
+                            System.out.println("-=-=-=-=-==-=-=-=-=-=-==-=-=-=-=-=-=-==-=-=-===-=-=-=-=");
+//                            int ctpFirstValidPara = findFirstValidParagraph(cellToPlace);
+//                            int ctpFirstValidRun = findFirstValidRun(cellToPlace.getParagraphs().get(ctpFirstValidPara));
+//
+//
+//
+//
+
+//
+//                            System.out.println("is valid para ------------- " + ctpFirstValidPara);
+//                            System.out.println("is valid cell ============= " + ctpFirstValidRun);
+
+//                            double fontSize = cellToPlace.getParagraphs().get(ctpFirstValidPara).getRuns().
+//                                    get(ctpFirstValidRun).getFontSizeAsDouble();
+//                            String fontFamily = cellToPlace.getParagraphs().get(ctpFirstValidPara).getRuns().
+//                                    get(ctpFirstValidRun).getFontFamily();
+                            XWPFRun newRun = cellToPlace.getParagraphs().get(cellToPlace.getParagraphs().size() - 1).
+                                    createRun();
+                            newRun.setText("{" + loopContentToPlace + "}");
+                            newRun.setFontFamily("Times New Roman");
+                            newRun.setFontSize(10.5);
 
 
                             rowsToDelete.add(i); // saves the rows that contain "for ... in ..."
@@ -93,37 +182,38 @@ public class PythonLoopsToPOI {
                             // get each cell from the next row
                             for (XWPFTableCell cell : nextRow.getTableCells()) {
                                 String nextRowCellText = cell.getText();
-                                System.out.println(nextRowCellText);
                                 Matcher multiFieldsInOneCellMatcher = multiFieldsInOneCellPattern.
                                         matcher(nextRowCellText);
 
                                 if (multiFieldsInOneCellMatcher.find()) {
-                                    System.out.println("group: ->>>>>>" + multiFieldsInOneCellMatcher.group());
-                                    // TODO: complete the case where "@" (syb. for pictures) is present
+
+                                    String multiFieldsMatchGroup_1 = multiFieldsInOneCellMatcher.group(1);
+                                    String cellMatcherResult = (multiFieldsMatchGroup_1 != null
+                                            && multiFieldsMatchGroup_1.equals("@"))
+                                            ? multiFieldsMatchGroup_1 + multiFieldsInOneCellMatcher.group(3)
+                                            : multiFieldsInOneCellMatcher.group(3);
 
 
-
-
-                                    String cellMatcherResult = multiFieldsInOneCellMatcher.group();
-                                    XWPFParagraph paragraph = cell.getParagraphs().get(0);
-                                    XWPFRun run = paragraph.getRuns().get(0);
+                                    XWPFParagraph paragraph = cell.getParagraphs().get(findFirstValidParagraph(cell));
 
                                     // remove all old cells
                                     ParagraphAlignment paragraphAlignment = paragraph.getAlignment();
 
-                                    cell.removeParagraph(0);
+                                    for (int r = cell.getParagraphs().size() - 1; r >= 0; r--) {
+                                        cell.removeParagraph(r);
+                                    }
 
                                     // add new content to cells
                                     XWPFParagraph newParagraph = cell.addParagraph();
                                     newParagraph.createRun().setText("[" + cellMatcherResult + "]");
-                                    newParagraph.getRuns().get(0).setFontFamily(fontFamily);
-                                    newParagraph.getRuns().get(0).setFontSize(fontSize);
+                                    newParagraph.getRuns().get(0).setFontSize(FONT_SIZE);
+                                    newParagraph.getRuns().get(0).setFontFamily(FONT_FAMILY);
                                     newParagraph.setAlignment(paragraphAlignment);
                                 }
                             }
                         }
 
-                        if (endloopMatcher.find()) {
+                        else if (endloopMatcher.find()) {
                             rowsToDelete.add(i); // saves the rows that contain "endloop"
                         }
                     }
@@ -136,10 +226,12 @@ public class PythonLoopsToPOI {
                 }
 
             }
-            FileOutputStream fos = new FileOutputStream("output.docx");
+
+
+            FileOutputStream fos = new FileOutputStream("./output/output.docx");
             tempDoc.write(fos);
         } catch (IOException e) {
-            System.out.println("bad file");
+            System.out.println("Bad File or Bad File Path");
         }
     }
 
@@ -153,15 +245,21 @@ public class PythonLoopsToPOI {
         Pattern p1 = Pattern.compile(multiFieldsInOneCellRegex);
         Matcher m1 = p1.matcher(s1);
 
-        System.out.println(m1.find());
-        System.out.println(m1.group());
-
     }
 
     public static void main(String[] args) {
 
-        String path = "./templates/0.4kV电缆分支箱.docx";
-//        foo();
+
+        String path = "./templates/demo.docx";
+//        File file = new File(path);
+//        File[] files = file.listFiles();
+//        if (files != null) {
+//            for (File f : files) {
+//                System.out.println(f.getPath());
+//                handles(f.getPath());
+//            }
+//        }
+
         handles(path);
     }
 }
