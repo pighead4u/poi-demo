@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author zhuhuanhuan@shunjiantech.cn
@@ -22,6 +24,8 @@ public class FormalTemplate {
     private final String PATTERN = "(?<=\\{\\{\\^)[^\\}\\}]+";
     private final int TABLE_START = 6;
 
+    private  final String TABLE_NAME = "2检测结果汇总";
+
     public void buildNewTemplate(String path, Set<String> excludeTable) {
         try (XWPFDocument document = new XWPFDocument(new FileInputStream(path))) {
             StopWatch watch = new StopWatch();
@@ -30,6 +34,10 @@ public class FormalTemplate {
             deleteExperiments(document, excludeTable);
             watch.split();
             System.out.println("deleteExperiments-time:" + watch.getTime());
+
+            deleteResults(document, excludeTable);
+            watch.split();
+            System.out.println("deleteResults-time:" + watch.getTime());
 
             deleteTables(excludeTable, document);
             watch.split();
@@ -119,6 +127,47 @@ public class FormalTemplate {
 
             }
 
+        }
+    }
+
+    private void deleteResults(XWPFDocument document, Set<String> excludeTable) {
+        List<XWPFTable> tables = document.getTables();
+        // get the table number
+        int tableNum = 0;
+        for (int i = 0; i < tables.size(); i++) {
+            if (tables.get(i).getRow(0).getCell(0).getText().equals(TABLE_NAME)) {
+                tableNum = i;
+                break;
+            }
+        }
+
+        XWPFTable table = tables.get(tableNum); // the table 2检测结果汇总
+        List<XWPFTableRow> rows = table.getRows();
+
+        // create the pattern for regex matching
+        String p = "([a-z]+_.+)\\.";
+        Pattern pattern = Pattern.compile(p);
+
+        // store all possible outcomes
+        List<Integer> rowIndices = IntStream.range(2, rows.size()).boxed().collect(Collectors.toList());
+
+        // save wanted lines
+        for (int i = 2; i < rows.size(); i++) { // since the content starts at the third line
+            for (XWPFTableCell cell : rows.get(i).getTableCells()) {
+                Matcher matcher = pattern.matcher(cell.getText());
+                if (matcher.find() && excludeTable.contains(matcher.group(1))) {
+                    rowIndices.remove((Integer) i);
+                    break;
+                }
+            }
+        }
+
+        System.out.println(rowIndices);
+        Collections.reverse(rowIndices);
+
+        // keep only the rows that match the pattern
+        for (int i : rowIndices) {
+            table.removeRow(i);
         }
     }
 
